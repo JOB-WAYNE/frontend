@@ -1,0 +1,137 @@
+/* Global Styles */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f9;
+  }
+  
+  .container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  
+  .title {
+    text-align: center;
+    color: #333;
+    font-size: 2rem;
+    margin-bottom: 20px;
+  }
+  
+  .subtitle {
+    font-size: 1.5rem;
+    color: #555;
+    margin-bottom: 15px;
+  }
+  
+  /* Doctors List */
+  .doctors-list ul {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .doctor-card {
+    background: #fff;
+    border: 1px solid #ddd;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .doctor-card.available {
+    border-color: #4caf50;
+  }
+  
+  .doctor-card.unavailable {
+    border-color: #f44336;
+  }
+  
+  .doctor-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+  }
+  
+  .doctor-name {
+    font-weight: bold;
+    font-size: 1.2rem;
+    margin: 0;
+  }
+  
+  .doctor-specialization {
+    font-size: 0.9rem;
+    color: #777;
+  }
+  
+  .unavailable-text {
+    font-style: italic;
+    color: #999;
+  }
+  
+  /* Buttons */
+  .button {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    color: #fff;
+  }
+  
+  .book-button {
+    background-color: #007bff;
+  }
+  
+  .book-button:hover {
+    background-color: #0056b3;
+  }
+  
+  .submit-button {
+    background-color: #28a745;
+  }
+  
+  .submit-button:hover {
+    background-color: #218838;
+  }
+  
+  /* Appointment Form */
+  .appointment-form {
+    background: #fff;
+    border: 1px solid #ddd;
+    padding: 15px;
+    border-radius: 5px;
+    margin-top: 20px;
+  }
+  
+  .form-group {
+    margin-bottom: 15px;
+  }
+  
+  .label {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 1rem;
+    color: #555;
+  }
+  
+  .input-field {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 1rem;
+  }
+  
+  /* Confirmation Message */
+  .confirmation-message {
+    background-color: #d4edda;
+    border: 1px solid #c3e6cb;
+    color: #155724;
+    padding: 15px;
+    border-radius: 5px;
+    margin-top: 20px;
+  }
