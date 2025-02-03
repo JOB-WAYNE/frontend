@@ -2,41 +2,46 @@ import React, { useState, useEffect } from "react";
 import "./styles.css";
 
 function HospitalManagementSystem() {
-  const [doctors, setDoctors] = useState([]);  // To hold doctor data
-  const [selectedDoctor, setSelectedDoctor] = useState(null);  // For selected doctor
-  const [appointmentDetails, setAppointmentDetails] = useState({ name: "", date: "" });  // For appointment details
-  const [confirmationMessage, setConfirmationMessage] = useState("");  // For success/failure message
+  const [doctors, setDoctors] = useState([]);
+  const [selectedDoctor, setSelectedDoctor] = useState(null);
+  const [appointmentDetails, setAppointmentDetails] = useState({ name: "", date: "" });
+  const [confirmationMessage, setConfirmationMessage] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Fetch doctors from the backend on component mount
   useEffect(() => {
     fetch("http://localhost:5000/doctors")
-      .then((response) => response.json())
-      .then((data) => {
-        console.log(data);  // Log the data to check if it's fetched correctly
-        setDoctors(data);  // Set the doctors list
+      .then(response => {
+        if (!response.ok) {
+          throw new Error("Failed to fetch doctors");
+        }
+        return response.json();
       })
-      .catch((error) => console.error("Error fetching doctors:", error));
+      .then(data => {
+        setDoctors(data);
+        setLoading(false);
+      })
+      .catch(error => {
+        console.error("Error fetching doctors:", error);
+        setError(error.message);
+        setLoading(false);
+      });
   }, []);
-  
 
-  // Handle form submission for booking an appointment
   const handleBooking = (e) => {
-    e.preventDefault();  // Prevent default form submission
+    e.preventDefault();
 
-    // Check if all fields are filled
     if (!selectedDoctor || !appointmentDetails.name || !appointmentDetails.date) {
       alert("Please complete all fields.");
       return;
     }
 
-    // Create an appointment object
     const appointmentData = {
       patient_name: appointmentDetails.name,
       doctor_id: selectedDoctor.id,
       date: appointmentDetails.date,
     };
 
-    // Send POST request to the backend to book an appointment
     fetch("http://localhost:5000/appointments", {
       method: "POST",
       headers: {
@@ -44,63 +49,61 @@ function HospitalManagementSystem() {
       },
       body: JSON.stringify(appointmentData),
     })
-      .then((response) => response.json())
-      .then((data) => {
+      .then(response => response.json())
+      .then(data => {
         if (data.message) {
-          // In case of error message from backend
           setConfirmationMessage(data.message);
         } else {
-          // Success message
           setConfirmationMessage(
             `Appointment successfully booked with Dr. ${selectedDoctor.name} on ${appointmentDetails.date} for ${appointmentDetails.name}.`
           );
+          // Reset form fields after booking
+          setSelectedDoctor(null);
+          setAppointmentDetails({ name: "", date: "" });
         }
+        // Clear message after 5 seconds
+        setTimeout(() => setConfirmationMessage(""), 5000);
       })
-      .catch((error) => {
+      .catch(error => {
         console.error("Error booking appointment:", error);
         setConfirmationMessage("An error occurred while booking your appointment.");
+        setTimeout(() => setConfirmationMessage(""), 5000);
       });
-
-    // Reset form fields after booking
-    setSelectedDoctor(null);
-    setAppointmentDetails({ name: "", date: "" });
   };
+
+  if (loading) return <p>Loading doctors...</p>;
+  if (error) return <p>Error: {error}</p>;
 
   return (
     <div className="container">
       <h1 className="title">Hospital Management System</h1>
 
-      {/* Doctors List */}
       <div className="doctors-list">
         <h2 className="subtitle">Available Doctors</h2>
         <ul>
-          {doctors.map((doctor) => (
-            <li
-              key={doctor.id}
-              className={`doctor-card ${doctor.available ? "available" : "unavailable"}`}
-            >
-              <div className="doctor-info">
-                <div>
-                  <p className="doctor-name">{doctor.name}</p>
-                  <p className="doctor-specialization">{doctor.specialization}</p>
-                </div>
-                {doctor.available ? (
+          {doctors.length > 0 ? (
+            doctors.map(doctor => (
+              <li key={doctor.id} className="doctor-card">
+                <div className="doctor-info">
+                  <div>
+                    <p className="doctor-name">{doctor.name}</p>
+                    <p className="doctor-specialization">{doctor.specialization}</p>
+                  </div>
                   <button
                     className="button book-button"
-                    onClick={() => setSelectedDoctor(doctor)} // Select doctor
+                    onClick={() => setSelectedDoctor(doctor)}
                   >
                     Book Appointment
                   </button>
-                ) : (
-                  <span className="unavailable-text">Not Available</span>
-                )}
-              </div>
-            </li>
-          ))}
+                </div>
+              </li>
+            ))
+          ) : (
+            <p>No doctors available</p>
+          )}
         </ul>
       </div>
 
-      {/* Appointment Form */}
       {selectedDoctor && (
         <div className="appointment-form">
           <h2 className="subtitle">Book Appointment with {selectedDoctor.name}</h2>
@@ -111,9 +114,7 @@ function HospitalManagementSystem() {
                 type="text"
                 className="input-field"
                 value={appointmentDetails.name}
-                onChange={(e) =>
-                  setAppointmentDetails({ ...appointmentDetails, name: e.target.value })
-                }
+                onChange={(e) => setAppointmentDetails({ ...appointmentDetails, name: e.target.value })}
                 required
               />
             </div>
@@ -123,10 +124,10 @@ function HospitalManagementSystem() {
                 type="date"
                 className="input-field"
                 value={appointmentDetails.date}
-                onChange={(e) =>
-                  setAppointmentDetails({ ...appointmentDetails, date: e.target.value })
-                }
+                onChange={(e) => setAppointmentDetails({ ...appointmentDetails, date: e.target.value })}
                 required
+                pattern="\d{4}-\d{2}-\d{2}"
+                title="Enter date in YYYY-MM-DD format"
               />
             </div>
             <button type="submit" className="button submit-button">
@@ -136,7 +137,6 @@ function HospitalManagementSystem() {
         </div>
       )}
 
-      {/* Confirmation Message */}
       {confirmationMessage && (
         <div className="confirmation-message">
           <p>{confirmationMessage}</p>
