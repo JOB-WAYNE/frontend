@@ -1,30 +1,67 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./styles.css";
 
 function HospitalManagementSystem() {
-  // Sample data for doctors
-  const [doctors] = useState([
-    { id: 1, name: "Dr. Alice Johnson", specialization: "Cardiologist", available: true },
-    { id: 2, name: "Dr. Bob Smith", specialization: "Dermatologist", available: false },
-    { id: 3, name: "Dr. Carol Lee", specialization: "Neurologist", available: true },
-    { id: 4, name: "Dr. David Wilson", specialization: "Pediatrician", available: true },
-  ]);
+  const [doctors, setDoctors] = useState([]);  // To hold doctor data
+  const [selectedDoctor, setSelectedDoctor] = useState(null);  // For selected doctor
+  const [appointmentDetails, setAppointmentDetails] = useState({ name: "", date: "" });  // For appointment details
+  const [confirmationMessage, setConfirmationMessage] = useState("");  // For success/failure message
 
-  // State for appointment booking
-  const [selectedDoctor, setSelectedDoctor] = useState(null);
-  const [appointmentDetails, setAppointmentDetails] = useState({ name: "", date: "" });
-  const [confirmationMessage, setConfirmationMessage] = useState("");
+  // Fetch doctors from the backend on component mount
+  useEffect(() => {
+    fetch("http://localhost:5000/doctors")
+      .then((response) => response.json())
+      .then((data) => {
+        console.log(data);  // Log the data to check if it's fetched correctly
+        setDoctors(data);  // Set the doctors list
+      })
+      .catch((error) => console.error("Error fetching doctors:", error));
+  }, []);
+  
 
-  // Handle booking submission
+  // Handle form submission for booking an appointment
   const handleBooking = (e) => {
-    e.preventDefault();
+    e.preventDefault();  // Prevent default form submission
+
+    // Check if all fields are filled
     if (!selectedDoctor || !appointmentDetails.name || !appointmentDetails.date) {
       alert("Please complete all fields.");
       return;
     }
-    setConfirmationMessage(
-      `Appointment successfully booked with ${selectedDoctor.name} on ${appointmentDetails.date} for ${appointmentDetails.name}.`
-    );
+
+    // Create an appointment object
+    const appointmentData = {
+      patient_name: appointmentDetails.name,
+      doctor_id: selectedDoctor.id,
+      date: appointmentDetails.date,
+    };
+
+    // Send POST request to the backend to book an appointment
+    fetch("http://localhost:5000/appointments", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(appointmentData),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.message) {
+          // In case of error message from backend
+          setConfirmationMessage(data.message);
+        } else {
+          // Success message
+          setConfirmationMessage(
+            `Appointment successfully booked with Dr. ${selectedDoctor.name} on ${appointmentDetails.date} for ${appointmentDetails.name}.`
+          );
+        }
+      })
+      .catch((error) => {
+        console.error("Error booking appointment:", error);
+        setConfirmationMessage("An error occurred while booking your appointment.");
+      });
+
+    // Reset form fields after booking
     setSelectedDoctor(null);
     setAppointmentDetails({ name: "", date: "" });
   };
@@ -50,7 +87,7 @@ function HospitalManagementSystem() {
                 {doctor.available ? (
                   <button
                     className="button book-button"
-                    onClick={() => setSelectedDoctor(doctor)}
+                    onClick={() => setSelectedDoctor(doctor)} // Select doctor
                   >
                     Book Appointment
                   </button>
@@ -66,9 +103,7 @@ function HospitalManagementSystem() {
       {/* Appointment Form */}
       {selectedDoctor && (
         <div className="appointment-form">
-          <h2 className="subtitle">
-            Book Appointment with {selectedDoctor.name}
-          </h2>
+          <h2 className="subtitle">Book Appointment with {selectedDoctor.name}</h2>
           <form onSubmit={handleBooking}>
             <div className="form-group">
               <label>Your Name</label>
