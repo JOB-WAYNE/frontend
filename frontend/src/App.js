@@ -1,112 +1,145 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 import "./styles.css";
 
-function HospitalManagementSystem() {
-  // Sample data for doctors
-  const [doctors] = useState([
-    { id: 1, name: "Dr. Alice Johnson", specialization: "Cardiologist", available: true },
-    { id: 2, name: "Dr. Bob Smith", specialization: "Dermatologist", available: false },
-    { id: 3, name: "Dr. Carol Lee", specialization: "Neurologist", available: true },
-    { id: 4, name: "Dr. David Wilson", specialization: "Pediatrician", available: true },
-  ]);
+const API_BASE_URL = "http://127.0.0.1:5000"; // Your Flask backend
 
-  // State for appointment booking
+function HospitalManagementSystem() {
+  const [doctors, setDoctors] = useState([]);
   const [selectedDoctor, setSelectedDoctor] = useState(null);
-  const [appointmentDetails, setAppointmentDetails] = useState({ name: "", date: "" });
+  const [patientDetails, setPatientDetails] = useState({
+    name: "",
+    email: "",
+    age: ""
+  });
+  const [appointmentDetails, setAppointmentDetails] = useState({
+    date: "",
+    time: ""
+  });
   const [confirmationMessage, setConfirmationMessage] = useState("");
 
-  // Handle booking submission
-  const handleBooking = (e) => {
+  // Load doctors
+  useEffect(() => {
+    axios
+      .get(`${API_BASE_URL}/doctors`)
+      .then((res) => setDoctors(res.data))
+      .catch((err) => console.error("Error loading doctors:", err));
+  }, []);
+
+  const handleBooking = async (e) => {
     e.preventDefault();
-    if (!selectedDoctor || !appointmentDetails.name || !appointmentDetails.date) {
-      alert("Please complete all fields.");
+
+    if (
+      !selectedDoctor ||
+      !patientDetails.name ||
+      !patientDetails.email ||
+      !patientDetails.age ||
+      !appointmentDetails.date ||
+      !appointmentDetails.time
+    ) {
+      alert("Please fill out all fields");
       return;
     }
-    setConfirmationMessage(
-      `Appointment successfully booked with ${selectedDoctor.name} on ${appointmentDetails.date} for ${appointmentDetails.name}.`
-    );
-    setSelectedDoctor(null);
-    setAppointmentDetails({ name: "", date: "" });
+
+    try {
+      // Step 1: Create patient
+      const patientRes = await axios.post(`${API_BASE_URL}/patients`, {
+        name: patientDetails.name,
+        email: patientDetails.email,
+        age: parseInt(patientDetails.age)
+      });
+
+      const patientId = patientRes.data.id;
+
+      // Step 2: Create appointment
+      await axios.post(`${API_BASE_URL}/appointments`, {
+        doctor_id: selectedDoctor.id,
+        patient_id: patientId,
+        date: appointmentDetails.date,
+        time: appointmentDetails.time
+      });
+
+      setConfirmationMessage(
+        `Appointment booked with Dr. ${selectedDoctor.name} on ${appointmentDetails.date} at ${appointmentDetails.time} for ${patientDetails.name}`
+      );
+
+      // Clear form
+      setSelectedDoctor(null);
+      setPatientDetails({ name: "", email: "", age: "" });
+      setAppointmentDetails({ date: "", time: "" });
+    } catch (error) {
+      console.error("Booking error:", error);
+      alert("Failed to book appointment.");
+    }
   };
 
   return (
     <div className="container">
-      <h1 className="title">Hospital Management System</h1>
+      <h1>Hospital Management System</h1>
 
-      {/* Doctors List */}
-      <div className="doctors-list">
-        <h2 className="subtitle">Available Doctors</h2>
-        <ul>
-          {doctors.map((doctor) => (
-            <li
-              key={doctor.id}
-              className={`doctor-card ${doctor.available ? "available" : "unavailable"}`}
-            >
-              <div className="doctor-info">
-                <div>
-                  <p className="doctor-name">{doctor.name}</p>
-                  <p className="doctor-specialization">{doctor.specialization}</p>
-                </div>
-                {doctor.available ? (
-                  <button
-                    className="button book-button"
-                    onClick={() => setSelectedDoctor(doctor)}
-                  >
-                    Book Appointment
-                  </button>
-                ) : (
-                  <span className="unavailable-text">Not Available</span>
-                )}
-              </div>
-            </li>
-          ))}
-        </ul>
-      </div>
+      <h2>Available Doctors</h2>
+      <ul>
+        {doctors.map((doc) => (
+          <li key={doc.id}>
+            <strong>{doc.name}</strong> - {doc.specialty}
+            <button onClick={() => setSelectedDoctor(doc)}>Book</button>
+          </li>
+        ))}
+      </ul>
 
-      {/* Appointment Form */}
       {selectedDoctor && (
-        <div className="appointment-form">
-          <h2 className="subtitle">
-            Book Appointment with {selectedDoctor.name}
-          </h2>
-          <form onSubmit={handleBooking}>
-            <div className="form-group">
-              <label>Your Name</label>
-              <input
-                type="text"
-                className="input-field"
-                value={appointmentDetails.name}
-                onChange={(e) =>
-                  setAppointmentDetails({ ...appointmentDetails, name: e.target.value })
-                }
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label>Appointment Date</label>
-              <input
-                type="date"
-                className="input-field"
-                value={appointmentDetails.date}
-                onChange={(e) =>
-                  setAppointmentDetails({ ...appointmentDetails, date: e.target.value })
-                }
-                required
-              />
-            </div>
-            <button type="submit" className="button submit-button">
-              Confirm Appointment
-            </button>
-          </form>
-        </div>
+        <form onSubmit={handleBooking}>
+          <h3>Book with Dr. {selectedDoctor.name}</h3>
+
+          <input
+            type="text"
+            placeholder="Your Name"
+            value={patientDetails.name}
+            onChange={(e) =>
+              setPatientDetails({ ...patientDetails, name: e.target.value })
+            }
+            required
+          />
+          <input
+            type="email"
+            placeholder="Your Email"
+            value={patientDetails.email}
+            onChange={(e) =>
+              setPatientDetails({ ...patientDetails, email: e.target.value })
+            }
+            required
+          />
+          <input
+            type="number"
+            placeholder="Your Age"
+            value={patientDetails.age}
+            onChange={(e) =>
+              setPatientDetails({ ...patientDetails, age: e.target.value })
+            }
+            required
+          />
+          <input
+            type="date"
+            value={appointmentDetails.date}
+            onChange={(e) =>
+              setAppointmentDetails({ ...appointmentDetails, date: e.target.value })
+            }
+            required
+          />
+          <input
+            type="time"
+            value={appointmentDetails.time}
+            onChange={(e) =>
+              setAppointmentDetails({ ...appointmentDetails, time: e.target.value })
+            }
+            required
+          />
+
+          <button type="submit">Confirm Appointment</button>
+        </form>
       )}
 
-      {/* Confirmation Message */}
-      {confirmationMessage && (
-        <div className="confirmation-message">
-          <p>{confirmationMessage}</p>
-        </div>
-      )}
+      {confirmationMessage && <p>{confirmationMessage}</p>}
     </div>
   );
 }
