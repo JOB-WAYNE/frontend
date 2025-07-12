@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "./styles.css";
 
-const API_BASE_URL = "http://127.0.0.1:5000"; // Your Flask backend
+const API_BASE_URL = "http://127.0.0.1:5000";
 
 function HospitalManagementSystem() {
   const [doctors, setDoctors] = useState([]);
@@ -43,7 +43,7 @@ function HospitalManagementSystem() {
 
     try {
       // Step 1: Create patient
-      const patientRes = await axios.post(`${API_BASE_URL}/patients`, {
+      const patientRes = await axios.post(`${API_BASE_URL}/patients/`, {
         name: patientDetails.name,
         email: patientDetails.email,
         age: parseInt(patientDetails.age)
@@ -60,35 +60,35 @@ function HospitalManagementSystem() {
       });
 
       setConfirmationMessage(
-        `Appointment booked with Dr. ${selectedDoctor.name} on ${appointmentDetails.date} at ${appointmentDetails.time} for ${patientDetails.name}`
+        `✅ Appointment booked with Dr. ${selectedDoctor.name} on ${appointmentDetails.date} at ${appointmentDetails.time} for ${patientDetails.name}`
       );
 
-      // Clear form
+      // Reset form
       setSelectedDoctor(null);
       setPatientDetails({ name: "", email: "", age: "" });
       setAppointmentDetails({ date: "", time: "" });
     } catch (error) {
       console.error("Booking error:", error);
-      alert("Failed to book appointment.");
+      alert("❌ Failed to book appointment. Please try again.");
     }
   };
 
   return (
     <div className="container">
-      <h1>Hospital Management System</h1>
+      <h1>🏥 Hospital Management System</h1>
 
       <h2>Available Doctors</h2>
       <ul>
         {doctors.map((doc) => (
           <li key={doc.id}>
-            <strong>{doc.name}</strong> - {doc.specialty}
+            <strong>{doc.name}</strong> — {doc.specialty || doc.specialization}
             <button onClick={() => setSelectedDoctor(doc)}>Book</button>
           </li>
         ))}
       </ul>
 
       {selectedDoctor && (
-        <form onSubmit={handleBooking}>
+        <form onSubmit={handleBooking} className="booking-form">
           <h3>Book with Dr. {selectedDoctor.name}</h3>
 
           <input
@@ -139,7 +139,7 @@ function HospitalManagementSystem() {
         </form>
       )}
 
-      {confirmationMessage && <p>{confirmationMessage}</p>}
+      {confirmationMessage && <p className="confirmation">{confirmationMessage}</p>}
     </div>
   );
 }
