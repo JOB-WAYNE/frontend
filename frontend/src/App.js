@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "./styles.css";
 
-const API_BASE_URL = "http://127.0.0.1:5000";
+const API_BASE_URL = "https://hospital-backend-0ak1.onrender.com";
 
 function HospitalManagementSystem() {
   const [doctors, setDoctors] = useState([]);
